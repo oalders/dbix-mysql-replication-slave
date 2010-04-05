@@ -1,0 +1,3 @@
+DBIx-MySQL-Replication-Slave-*
+*.kpf
+.build
