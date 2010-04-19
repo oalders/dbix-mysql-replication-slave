@@ -146,6 +146,13 @@ L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBIx-MySQL-Replication-Slave>.
 I will be notified, and then you'll automatically be notified of progress on
 your bug as I make changes.
 
+=head1 TESTING
+
+Have a look at the source of t/connect.t if you'd like to do more extensive
+testing of your install. This will require that you already have a fully
+functional slave set up in order for the tests to pass. These tests are
+skipped by default, but you are encouraged to run them as part of your install
+process.
 
 =head1 SUPPORT
 
@@ -179,11 +186,6 @@ L<http://cpanratings.perl.org/d/DBIx-MySQL-Replication-Slave>
 L<http://search.cpan.org/dist/DBIx-MySQL-Replication-Slave/>
 
 =back
-
-=head1 TODO
-
-The test suite is severely lacking here, but the code is in use in production
-right now.  Adding proper tests in future is a priority.
 
 =head1 ACKNOWLEDGEMENTS
 
@@ -294,7 +296,6 @@ sub is_running {
     # allow some time to connect, if need be
     foreach (1..10) {
         $self->refresh_status;
-        print "slave io: " . $self->status->{slave_io_state} . "\n";
         if ( $self->status->{slave_io_state} ne 'Connecting to master' ) {
             last;
         }
