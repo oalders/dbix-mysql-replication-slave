@@ -21,7 +21,7 @@ which you don't like.
 =cut
 
 use Data::Dump qw( dump );
-use Test::More tests => 15;
+use Test::More tests => 16;
 
 require_ok( 'DBD::mysql' );
 require_ok( 'DBIx::MySQL::Replication::Slave' );
