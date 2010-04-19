@@ -15,10 +15,37 @@ attention. It doesn't do anything you can't already do for yourself, but it
 makes it just a little bit quicker to check on the health of your slaves.
 
     use DBIx::MySQL::Replication::Slave;
-    
+
     my $slave = DBIx::MySQL::Replication::Slave->new( dbh => $dbh );
-    my $status = $slave->status;
-    print "seconds behind: " . $status->{'seconds_behind_master'};
+
+    if ( $slave->is_stopped ) {
+        $slave->start;
+        if ( $slave->is_running ) {
+            print "slave now running\n";
+        }
+        else {
+            print "cannot start stopped slave.\n";
+        }
+    }
+
+If you need a quick monitor script:
+
+    my $slave = DBIx::MySQL::Replication::Slave->new( dbh => $dbh );
+    $slave->max_seconds_behind_master( 30 );
+
+    if ( !$slave->slave_ok ) {
+        # send an alert to the administrator...
+    }
+
+For some quick debugging:
+
+    use DBIx::MySQL::Replication::Slave;
+    use Data::Dump qw( dump );
+
+    my $slave = DBIx::MySQL::Replication::Slave->new( dbh => $dbh );
+    dump $slave->status;
+
+    print "seconds behind: " . $slave->status->{seconds_behind_master};
 
 =head1 CONSTRUCTOR AND STARTUP
 
@@ -27,7 +54,7 @@ makes it just a little bit quicker to check on the health of your slaves.
 Creates and returns a new DBIx::MySQL::Replication::Slave object.
 
     my $slave = DBIx::MySQL::Replication::Slave->new( dbh => $dbh );
-    
+
 =over 4
 
 =item * C<< dbh => $dbh >>
@@ -59,7 +86,7 @@ checking on your health. This is strongly recommended:
 
 If you think it's cleaner, you can also set this value *after* object creation.
 
-    $slave->max_seconds_behind_master(30); 
+    $slave->max_seconds_behind_master(30);
 
 =back
 
@@ -70,6 +97,11 @@ If you think it's cleaner, you can also set this value *after* object creation.
 Returns a HASHREF of the MySQL slave status variables.  These vars will, by
 default, be converted to lower case, unless you have turned this off when you
 construct the object.  See the lc option to new() for more info.
+
+=head2 refresh_status
+
+Issues a fresh "SLOW SLAVE STATUS" query and returns the new results of
+$slave->status to you.
 
 =head2 start
 
@@ -96,6 +128,74 @@ Returns true if both slave_io_running and slave_sql_running are set to 'No'.
 If only one of these values returns 'Yes', it's probably fair to say that the
 slave is in some transitional state. Neither stopped nor running may be an
 accurate description in this case.
+
+=head1 AUTHOR
+
+Olaf Alders, C<< <olaf at wundercounter.com> >>
+
+=head1 BUGS AND LIMITATIONS
+
+Please report any bugs or feature requests to
+C<bug-dbix-mysql-replication-slave at rt.cpan.org>, or through the web
+interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBIx-MySQL-Replication-Slave>.
+I will be notified, and then you'll automatically be notified of progress on
+your bug as I make changes.
+
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc DBIx::MySQL::Replication::Slave
+
+
+You can also look for information at:
+
+=over 4
+
+=item * GitHub Source Repository
+
+L<http://github.com/oalders/dbix-mysql-replication-slave>
+
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=DBIx-MySQL-Replication-Slave>
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/DBIx-MySQL-Replication-Slave>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/DBIx-MySQL-Replication-Slave>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/DBIx-MySQL-Replication-Slave/>
+
+=back
+
+=head1 TODO
+
+The test suite is severely lacking here, but the code is in use in production
+right now.  Adding proper tests in future is a priority.
+
+=head1 ACKNOWLEDGEMENTS
+
+Thanks to Raybec Communications L<http://www.raybec.com> for funding my
+work on this module and for releasing it to the world.
+
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2010 Olaf Alders.
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
@@ -154,14 +254,14 @@ sub slave_ok {
 }
 
 sub stop {
-    
+
     my $self = shift;
     return $self->dbh->do("STOP SLAVE");
-    
+
 }
 
 sub is_stopped {
-    
+
     my $self = shift;
     $self->refresh_status;
 
@@ -171,22 +271,22 @@ sub is_stopped {
         && $status->{slave_sql_running} eq 'No' )
     {
         return 1;
-    }   
-    
+    }
+
     return 0;
 }
 
 sub start {
-    
-    my $self = shift;    
+
+    my $self = shift;
     return $self->dbh->do("START SLAVE");
-    
+
 }
 
 sub is_running {
-    
+
     my $self = shift;
-    
+
     # allow some time to connect, if need be
     foreach (1..10) {
         $self->refresh_status;
@@ -205,17 +305,17 @@ sub is_running {
         && $status->{slave_sql_running} eq 'Yes' )
     {
         return 1;
-    }   
-    
+    }
+
     return 0;
 }
 
 sub refresh_status {
-    
+
     my $self = shift;
     $self->status( $self->_build__status );
-    return;
-    
+    return $self->status;
+
 }
 
 sub _build__status {
