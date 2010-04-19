@@ -64,6 +64,10 @@ it to the constructer:
 
     my $slave = DBIx::MySQL::Replication::Slave->new( dbh => $dbh );
 
+Generally, the user will need to have the following MySQL privileges:
+
+SUPER,REPLICATION CLIENT
+
 =item * C<< lc => 0|1 >>
 
 By default, the status variables returned by MySQL are converted to lower case.
