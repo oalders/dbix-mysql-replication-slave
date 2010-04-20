@@ -27,7 +27,7 @@ require_ok( 'DBD::mysql' );
 require_ok( 'DBIx::MySQL::Replication::Slave' );
 
 SKIP: {
-    skip "connection vars need to be set in %ENV", 11
+    skip "connection vars need to be set in %ENV", 14
         unless exists $ENV{'SLAVE_DSN'} && $ENV{'SLAVE_DSN'};
 
     my $dbh = DBI->connect( $ENV{'SLAVE_DSN'}, $ENV{'SLAVE_USER'},

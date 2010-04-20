@@ -8,29 +8,30 @@ DBIx::MySQL::Replication::Slave - Stop, start and monitor your slaves.
 
 =head1 SYNOPSIS
 
-DBIx::MySQL::Replication::Slave issues a "SHOW SLAVE STATUS" query and returns
-the results to you as a HASHREF. It also includes the slave_ok() method, which
-is a handy shortcut to see whether your slave server requires any special
-attention. It doesn't do anything you can't already do for yourself, but it
-makes it just a little bit quicker to check on the health of your slaves.
+This module gives you an OO interface for stopping, starting and monitoring
+the status and health of your MySQL slaves. It doesn't do anything you can't
+already do for yourself, but it makes some basic tasks just a little bit
+easier.
 
     use DBIx::MySQL::Replication::Slave;
 
     my $slave = DBIx::MySQL::Replication::Slave->new( dbh => $dbh );
 
     if ( $slave->is_stopped ) {
+    
         $slave->start;
+    
         if ( $slave->is_running ) {
             print "slave now running\n";
         }
         else {
             print "cannot start stopped slave.\n";
         }
+    
     }
 
 If you need a quick monitor script:
 
-    my $slave = DBIx::MySQL::Replication::Slave->new( dbh => $dbh );
     $slave->max_seconds_behind_master( 30 );
 
     if ( !$slave->slave_ok ) {
@@ -39,11 +40,8 @@ If you need a quick monitor script:
 
 For some quick debugging:
 
-    use DBIx::MySQL::Replication::Slave;
     use Data::Dump qw( dump );
-
-    my $slave = DBIx::MySQL::Replication::Slave->new( dbh => $dbh );
-    dump $slave->status;
+    print dump( $slave->status );
 
     print "seconds behind: " . $slave->status->{seconds_behind_master};
 
@@ -60,7 +58,7 @@ Creates and returns a new DBIx::MySQL::Replication::Slave object.
 =item * C<< dbh => $dbh >>
 
 A valid database handle to your slave server is required.  You'll need to pass
-it to the constructer:
+it to the constructor:
 
     my $slave = DBIx::MySQL::Replication::Slave->new( dbh => $dbh );
 
